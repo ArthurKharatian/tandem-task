@@ -5,7 +5,7 @@ import org.example.palindrom.entity.Player;
 import org.example.palindrom.exceptions.GameException;
 import org.example.palindrom.service.GameService;
 import org.example.palindrom.service.PlayersService;
-import org.example.palindrom.utils.PalindromeValidator;
+import org.example.palindrom.utils.StringValidator;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -45,12 +45,13 @@ public class GameServiceImpl implements GameService {
                 return getPlayersCount();
             }
 
+            return playersCount;
+
         } catch (IOException | NumberFormatException e) {
             System.err.println("Неверные данные! Проверьте правильность ввода.");
             return getPlayersCount();
         }
 
-        return playersCount;
     }
 
     /**
@@ -103,23 +104,12 @@ public class GameServiceImpl implements GameService {
         players.forEach(player -> System.out.println(player.getName()));
 
         Player player = getPlayerFromGame(players);
-        if (player.getScore() != null) {
-            System.err.printf("Игрок с именем '%s' уже играл в игру, количество очков: %d%n", player.getName(), player.getScore());
-            gameStart(game);
-        }
 
-        System.out.println("Введите текст-палиндром: ");
-        String text;
-        try {
-            text = reader.readLine();
-        } catch (IOException e) {
-            System.err.println(e.getMessage());
-            throw new GameException("Игра завершилась по непредвиденным причинам");
-        }
+        String phrase = readPhraseForPlayer(player);
 
-        boolean isPalindrome = PalindromeValidator.isPalindrome(text);
-        long score = calculateScore(text, isPalindrome);
-        player.setScore(score);
+        boolean isPalindrome = StringValidator.isPalindrome(phrase);
+        long score = calculateScore(phrase, isPalindrome);
+        player.setScore(player.getScore() + score);
 
         System.out.println("==================================");
         System.out.println("ТОП-5 Игроков");
@@ -143,6 +133,34 @@ public class GameServiceImpl implements GameService {
         } catch (GameException e) {
             System.err.println("Игрок с таким именем не найден. Попробуйте еще раз...");
             return getPlayerFromGame(players);
+        }
+    }
+
+    /**
+     * Считывает с консоли фразу и добавляет ее игроку
+     * @param player Игрок, которому нужно добавить фразу для игры
+     * @return Слово, которое игрок еще не использовал
+     */
+    private String readPhraseForPlayer (Player player) {
+        System.out.println("Введите текст-палиндром: ");
+        String phrase;
+        try {
+            phrase = reader.readLine();
+            String noSpacePhrase = StringValidator.noSpacePhrase(phrase);
+
+            List<String> phrases = player.getPhrases().stream()
+                    .filter(ph -> StringValidator.noSpacePhrase(ph).equals(noSpacePhrase))
+                    .collect(Collectors.toList());
+            if (phrases.isEmpty()) {
+                player.getPhrases().add(phrase);
+                return phrase;
+            } else {
+                System.err.println("Фраза уже использовалась!");
+                return readPhraseForPlayer(player);
+            }
+        } catch (IOException e) {
+            System.err.println(e.getMessage());
+            throw new GameException("Игра завершилась по непредвиденным причинам");
         }
     }
 

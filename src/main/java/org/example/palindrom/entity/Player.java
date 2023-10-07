@@ -1,5 +1,7 @@
 package org.example.palindrom.entity;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -9,7 +11,8 @@ import java.util.Objects;
 public class Player {
 
     private String name;
-    private Long score;
+    private Long score = 0L;
+    private List<String> phrases = new ArrayList<>();
 
     public Player(String name) {
         this.name = name;
@@ -31,11 +34,20 @@ public class Player {
         this.score = score;
     }
 
+    public List<String> getPhrases() {
+        return phrases;
+    }
+
+    public void setPhrases(List<String> phrases) {
+        this.phrases = phrases;
+    }
+
     @Override
     public String toString() {
         return "Player{" +
                 "name='" + name + '\'' +
                 ", score=" + score +
+                ", phrases=" + phrases +
                 '}';
     }
 
