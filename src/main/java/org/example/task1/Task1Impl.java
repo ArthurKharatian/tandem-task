@@ -1,8 +1,7 @@
 package org.example.task1;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
+import org.example.task1.comparator.StringArrayComparator;
+
 import java.util.List;
 
 /**
@@ -14,10 +13,28 @@ import java.util.List;
 public class Task1Impl implements IStringRowsListSorter {
 
     // ваша реализация должна работать, как singleton. даже при использовании из нескольких потоков.
-    public static final IStringRowsListSorter INSTANCE = new Task1Impl();
+    public static final IStringRowsListSorter INSTANCE = getInstance();
+
+    private static Task1Impl task1Instance;
+
+    private Task1Impl() {
+    }
+
+    public static IStringRowsListSorter getInstance() {
+        Task1Impl localInstance = task1Instance;
+        if(localInstance == null) {
+            synchronized (Task1Impl.class) {
+                localInstance = task1Instance;
+                if(localInstance == null){
+                    task1Instance = localInstance = new Task1Impl();
+                }
+            }
+        }
+        return localInstance;
+    }
 
     @Override
-    public void sort(final List<String[]> rows, final int columnIndex) {
-        // напишите здесь свою реализацию. Мы ждем от вас хорошо структурированного, документированного и понятного кода.
+    public void sort(List<String[]> rows, final int columnIndex) {
+        rows.sort(new StringArrayComparator(columnIndex));
     }
 }
