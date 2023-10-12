@@ -5,7 +5,6 @@ import org.example.palindrom.entity.Player;
 import org.example.palindrom.exceptions.GameException;
 import org.example.palindrom.service.GameService;
 import org.example.palindrom.service.PlayersService;
-import org.example.palindrom.utils.StringValidator;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -14,6 +13,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static org.example.palindrom.utils.StringValidator.isPalindrome;
 import static org.example.palindrom.utils.StringValidator.noSpacePhrase;
 
 public class GameServiceImpl implements GameService {
@@ -112,15 +112,25 @@ public class GameServiceImpl implements GameService {
         Player player = getPlayerFromGame(players);
 
         String phrase = readPhraseForPlayer(player);
-
-        boolean isPalindrome = StringValidator.isPalindrome(phrase);
-        long score = calculateScore(phrase, isPalindrome);
-        player.setScore(player.getScore() + score);
+        calculatePlayerScore(player, phrase);
 
         System.out.println("==================================");
         System.out.println("ТОП-5 Игроков");
         top5LeadDashboard(players).forEach(p -> System.out.println(p.getName() + "   " + p.getScore() + " очка(ов)"));
         System.out.println("==================================");
+    }
+
+    /**
+     * Расчет очков для игрока
+     *
+     * @param player Принимает игрока
+     * @param phrase и фразу для расчета очков
+     */
+
+    private void calculatePlayerScore(Player player, String phrase) {
+        boolean isPalindrome = isPalindrome(phrase);
+        long score = calculateScore(phrase, isPalindrome);
+        player.setScore(player.getScore() + score);
     }
 
     /**
