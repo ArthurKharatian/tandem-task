@@ -1,8 +1,6 @@
 package org.example.palindrom.entity;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * Игрок
@@ -12,7 +10,7 @@ public class Player {
 
     private String name;
     private Long score = 0L;
-    private List<String> phrases = new ArrayList<>();
+    private Set<String> phrases = new HashSet<>();
 
     public Player(String name) {
         this.name = name;
@@ -34,11 +32,11 @@ public class Player {
         this.score = score;
     }
 
-    public List<String> getPhrases() {
+    public Set<String> getPhrases() {
         return phrases;
     }
 
-    public void setPhrases(List<String> phrases) {
+    public void setPhrases(Set<String> phrases) {
         this.phrases = phrases;
     }
 

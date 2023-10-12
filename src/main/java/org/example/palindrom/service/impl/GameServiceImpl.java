@@ -11,7 +11,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static org.example.palindrom.utils.StringValidator.noSpacePhrase;
 
 public class GameServiceImpl implements GameService {
     private final BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
@@ -25,7 +28,7 @@ public class GameServiceImpl implements GameService {
     public Game createGame() {
         System.out.println("Игра Палиндром!");
         int playersCount = getPlayersCount();
-        List<Player> players = setPlayersNamesInTheGame(playersCount);
+        Set<Player> players = setPlayersNamesInTheGame(playersCount);
         return new Game(players);
     }
 
@@ -59,18 +62,20 @@ public class GameServiceImpl implements GameService {
      *                     создает нового игрока путем ввода с консоли имени игрока
      * @return Список созданных игроков
      */
-    public List<Player> setPlayersNamesInTheGame(int playersCount) {
+    public Set<Player> setPlayersNamesInTheGame(int playersCount) {
         if (playersCount < 1) {
-            return Collections.emptyList();
+            return Collections.emptySet();
         }
 
-        List<Player> players = new ArrayList<>();
+        Set<Player> players = new HashSet<>();
 
         while (players.size() < playersCount) {
+            int actualPlayersCount = players.size();
+
             Player player = playersService.createPlayer();
-            if (!players.contains(player)) {
-                players.add(player);
-            } else {
+            players.add(player);
+
+            if (actualPlayersCount == players.size()) {
                 System.err.printf("Игрок с именем '%s' уже существует!%n", player.getName());
             }
         }
@@ -83,24 +88,25 @@ public class GameServiceImpl implements GameService {
      * @return Пять участников с наибольшим количеством очков.
      */
 
-    public List<Player> top5LeadDashboard(List<Player> players) {
-        return players.stream()
-                .filter(p -> Objects.nonNull(p.getName()))
-                .filter(p -> Objects.nonNull(p.getScore()))
+    public Set<Player> top5LeadDashboard(Set<Player> players) {
+
+        return new ArrayList<>(players)
+                .stream()
                 .sorted(Comparator.comparing(Player::getScore, Comparator.reverseOrder()))
                 .limit(5)
-                .collect(Collectors.toList());
+                .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
     /**
      * Логическое ядро игры
+     *
      * @param game Принимает новую игру и запуск ее
      */
     @Override
     public void gameStart(Game game) {
 
         System.out.println("Выберите участника игры");
-        List<Player> players = game.getPlayers();
+        Set<Player> players = game.getPlayers();
         players.forEach(player -> System.out.println(player.getName()));
 
         Player player = getPlayerFromGame(players);
@@ -119,45 +125,52 @@ public class GameServiceImpl implements GameService {
 
     /**
      * Поиск игрока по имени, считанного с консоли
+     *
      * @param players Принимает список участников игры
      * @return Найденный пользователя
      */
 
-    private Player getPlayerFromGame(List<Player> players) {
-        String playerName = playersService.readPlayerName();
-        try {
-            return players.stream()
-                    .filter(p -> p.getName().equalsIgnoreCase(playerName))
-                    .findFirst()
-                    .orElseThrow(GameException::new);
-        } catch (GameException e) {
+    private Player getPlayerFromGame(Set<Player> players) {
+        String playerName = playersService.readPlayerName().toLowerCase();
+
+        Map<String, Player> playersMap = players.stream()
+                .collect(Collectors.toMap(p -> p.getName().toLowerCase(), Function.identity()));
+
+        Player player = playersMap.get(playerName);
+
+        if (player == null) {
             System.err.println("Игрок с таким именем не найден. Попробуйте еще раз...");
             return getPlayerFromGame(players);
         }
+
+        return player;
     }
 
     /**
      * Считывает с консоли фразу и добавляет ее игроку
+     *
      * @param player Игрок, которому нужно добавить фразу для игры
      * @return Слово, которое игрок еще не использовал
      */
-    private String readPhraseForPlayer (Player player) {
+    private String readPhraseForPlayer(Player player) {
         System.out.println("Введите текст-палиндром: ");
         String phrase;
         try {
             phrase = reader.readLine();
-            String noSpacePhrase = StringValidator.noSpacePhrase(phrase);
+            String noSpacePhrase = noSpacePhrase(phrase);
 
-            List<String> phrases = player.getPhrases().stream()
-                    .filter(ph -> StringValidator.noSpacePhrase(ph).equals(noSpacePhrase))
-                    .collect(Collectors.toList());
-            if (phrases.isEmpty()) {
-                player.getPhrases().add(phrase);
-                return phrase;
-            } else {
+            Set<String> phrases = player.getPhrases();
+            int originalSize = phrases.size();
+
+            phrases.add(noSpacePhrase);
+
+            if (originalSize == phrases.size()) {
                 System.err.println("Фраза уже использовалась!");
                 return readPhraseForPlayer(player);
             }
+
+            return phrase;
+
         } catch (IOException e) {
             System.err.println(e.getMessage());
             throw new GameException("Игра завершилась по непредвиденным причинам");
@@ -165,15 +178,14 @@ public class GameServiceImpl implements GameService {
     }
 
     /**
-     *
-     * @param text Принимает текст для расчета очков
+     * @param text         Принимает текст для расчета очков
      * @param isPalindrome Признак того, что текст является палиндромом
      * @return Количество очков согласно длине текста за вычетом символов пробела
      */
 
     public long calculateScore(String text, boolean isPalindrome) {
         if (isPalindrome) {
-            long score = text.replace(" ", "").length();
+            long score = noSpacePhrase(text).length();
             System.out.printf("Введенное слово палиндром, вы заработали %d очков.%n", score);
             return score;
         }

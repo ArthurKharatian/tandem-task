@@ -1,22 +1,23 @@
 package org.example.palindrom.entity;
 
-import java.util.List;
+import java.util.Set;
+
 /**
  * Игра
  */
 public class Game {
 
-    private List<Player> players;
+    private Set<Player> players;
 
-    public Game(List<Player> players) {
+    public Game(Set<Player> players) {
         this.players = players;
     }
 
-    public List<Player> getPlayers() {
+    public Set<Player> getPlayers() {
         return players;
     }
 
-    public void setPlayers(List<Player> players) {
+    public void setPlayers(Set<Player> players) {
         this.players = players;
     }
 }

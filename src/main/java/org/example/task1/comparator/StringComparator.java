@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class StringComparator implements Comparator<String> {
 
@@ -34,22 +36,24 @@ public class StringComparator implements Comparator<String> {
 
     private static Iterable<String> splitString(String s) {
         List<String> result = new ArrayList<>();
-        s = s.replaceAll("\\D", " ");
+        Matcher match = Pattern.compile("\\D+|\\d+").matcher(s);
 
-        for (String split : s.split(" ")) {
-            split = split.trim();
-            if (!split.isEmpty()) {
-                result.add(split);
-            }
-        }
+        while (match.find())
+            result.add(match.group());
 
         return result;
     }
 
     private static int compareSubString(String s1, String s2) {
-        int i1 = Integer.parseInt(s1);
-        int i2 = Integer.parseInt(s2);
-        return Integer.compare(i1, i2);
+        try {
+            int i1 = Integer.parseInt(s1);
+            int i2 = Integer.parseInt(s2);
+            return Integer.compare(i1, i2);
+        } catch (NumberFormatException ignored) {
+
+        }
+
+        return s1.compareTo(s2);
     }
 
 }
